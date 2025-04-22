@@ -1,0 +1,80 @@
+CREATE DATABASE student_skill_dashboard;
+
+USE student_skill_dashboard;
+
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    age INT,
+    qualification VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE skills (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    description TEXT,
+    category ENUM('priority', 'additional')
+);
+
+CREATE TABLE user_skills (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    skill_id INT NOT NULL,
+    priority ENUM('primary', 'secondary') NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE
+);
+
+CREATE TABLE skill_tasks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    skill_id INT NOT NULL,
+    title VARCHAR(100) NOT NULL,
+    description TEXT,
+    difficulty ENUM('beginner', 'intermediate', 'advanced'),
+    FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE
+);
+
+CREATE TABLE user_tasks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    task_id INT NOT NULL,
+    completed BOOLEAN DEFAULT FALSE,
+    due_date DATE,
+    reminder_sent BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (task_id) REFERENCES skill_tasks(id) ON DELETE CASCADE
+);
+
+CREATE TABLE resources (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    skill_id INT NOT NULL,
+    title VARCHAR(100) NOT NULL,
+    url VARCHAR(255) NOT NULL,
+    type ENUM('course', 'tutorial', 'book', 'article'),
+    level ENUM('beginner', 'intermediate', 'advanced'),
+    FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE
+);
+
+CREATE TABLE journal_entries (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE reminders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    task_id INT NOT NULL,
+    reminder_time DATETIME NOT NULL,
+    message TEXT NOT NULL,
+    notified BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (task_id) REFERENCES user_tasks(id) ON DELETE CASCADE
+  //include a completed , completed_at , and notified to the reminders for the project to run properly and app.js to fetch properly.
+);
