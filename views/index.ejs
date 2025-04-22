@@ -1,0 +1,213 @@
+<%- include('partials/header', { user: user }) %>
+
+<div class="container mt-5 pt-4">
+    <link rel="stylesheet" href="/css/style.css">
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="hero-content">
+                <h1 class="display-4 fw-bold mb-4">Student Skill Dashboard</h1>
+                <p class="lead mb-4">Track your learning progress, manage your skills, and achieve your academic goals with our comprehensive dashboard.</p>
+
+                <% if (!user) { %>
+                    <div class="d-flex gap-3">
+                        <a href="/login" class="btn btn-primary btn-lg px-4">Login</a>
+                        <a href="/register" class="btn btn-outline-primary btn-lg px-4">Register</a>
+                    </div>
+                <% } else { %>
+                    <div class="d-flex gap-3">
+                        <a href="/skills" class="btn btn-primary btn-lg px-4">View Dashboard</a>
+                        <a href="/logout" class="btn btn-outline-primary btn-lg px-4">Logout</a>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <% if (user) { %>
+        <div class="d-flex flex-wrap justify-content-between mt-5 gap-4">
+            <!-- Custom Calendar -->
+            <div class="calendar-wrapper flex-grow-1" style="min-width: 300px; max-width: 60%;">
+                <h3 class="mb-2 fw-bold">Your Calendar</h3>
+                <div id="currentTime" class="mb-3 text-secondary"></div>
+                <div id="simpleCalendar"></div>
+            </div>
+        
+            <!-- Quick Actions -->
+            <div class="quick-actions card shadow" style="min-width: 280px; max-width: 350px;">
+                <div class="card-header bg-dark text-white fw-bold">
+                    Quick Actions
+                </div>
+                <div class="card-body d-grid gap-3 p-4">
+                    <a href="/journal" class="btn btn-primary">Add Journal Entry</a>
+                    <a href="/reminders" class="btn btn-primary">Set Reminder</a>
+                    <a href="/resources" class="btn btn-primary">View Resources</a>
+                </div>
+            </div>
+        </div>
+        
+        <style>
+            #simpleCalendar {
+                display: grid;
+                grid-template-columns: repeat(7, 1fr);
+                gap: 10px;
+                background-color: #f1f1f1;
+                padding: 20px;
+                border-radius: 12px;
+            }
+        
+            .calendar-header {
+                font-weight: bold;
+                text-align: center;
+                color: #555;
+                font-size: 0.95rem;
+            }
+        
+            .calendar-day {
+                text-align: center;
+                padding: 12px 0;
+                background: #ffffff;
+                border-radius: 10px;
+                border: 1px solid #ddd;
+                font-weight: 500;
+                font-size: 1rem;
+                color: #333;
+                transition: background 0.2s;
+            }
+        
+            .calendar-day:hover {
+                background-color: #d6e4ff;
+                cursor: default;
+            }
+        
+            .today {
+                background-color: #6c63ff !important;
+                color: #fff !important;
+                font-weight: bold;
+            }
+        
+            .quick-actions {
+                background-color: #1e1e1e;
+                border-radius: 12px;
+            }
+        
+            .quick-actions .btn {
+                font-weight: 500;
+                border-radius: 8px;
+            }
+        </style>
+        
+        <script>
+            function generateCalendar() {
+                const calendarEl = document.getElementById("simpleCalendar");
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = now.getMonth();
+                const today = now.getDate();
+        
+                // Show current time
+                const timeStr = now.toLocaleString('default', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                document.getElementById("currentTime").textContent = timeStr;
+        
+                // Days of week
+                const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                daysOfWeek.forEach(day => {
+                    const div = document.createElement('div');
+                    div.className = 'calendar-header';
+                    div.textContent = day;
+                    calendarEl.appendChild(div);
+                });
+        
+                const firstDay = new Date(year, month, 1).getDay();
+                const totalDays = new Date(year, month + 1, 0).getDate();
+        
+                for (let i = 0; i < firstDay; i++) {
+                    const empty = document.createElement('div');
+                    calendarEl.appendChild(empty);
+                }
+        
+                for (let day = 1; day <= totalDays; day++) {
+                    const div = document.createElement('div');
+                    div.className = 'calendar-day';
+                    if (day === today) div.classList.add('today');
+                    div.textContent = day;
+                    calendarEl.appendChild(div);
+                }
+            }
+        
+            document.addEventListener("DOMContentLoaded", generateCalendar);
+        </script>
+    <% } %>
+
+    <form action="/add-task" method="POST">
+        <label for="skillId">Select Skill:</label>
+        <select name="skillId" id="skillId" required>
+            <% userSkills.forEach(skill => { %>
+                <option value="<%= skill.id %>"><%= skill.name %></option>
+            <% }) %>
+        </select>
+    
+        <input type="text" name="title" placeholder="Task Title" required>
+        <textarea name="description" placeholder="Task Description"></textarea>
+    
+        <select name="difficulty" required>
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+        </select>
+    
+        <button type="submit">Add Task</button>
+    </form>   
+    <div id="taskMessage"></div>
+    <script>
+        document.getElementById('addTaskForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+        
+            const skillId = document.getElementById('skillId').value;
+            const title = document.getElementById('title').value;
+            const description = document.getElementById('description').value;
+            const difficulty = document.getElementById('difficulty').value;
+        
+            fetch('/add-task', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({ skillId, title, description, difficulty })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('taskMessage').textContent = data.message;
+                document.getElementById('addTaskForm').reset();
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById('taskMessage').textContent = 'Error adding task.';
+            });
+        });
+        </script>
+        <div class="task-list">
+            <h3>Your Added Tasks</h3>
+            <% if (userTasks.length > 0) { %>
+                <% userTasks.forEach(task => { %>
+                    <div class="task-card">
+                        <h4><%= task.title %></h4>
+                        <p><%= task.description %></p>
+                        <p class="difficulty">Difficulty: <%= task.difficulty %></p>
+                    </div>
+                <% }) %>
+            <% } else { %>
+                <p>No tasks added yet.</p>
+            <% } %>
+        </div>                
+</div>
+
+<%- include('partials/footer') %>

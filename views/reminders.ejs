@@ -1,0 +1,130 @@
+<%- include('partials/header', { user: user }) %>
+<link rel="stylesheet" href="/css/style.css">
+<div class="container mt-5 pt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Your Reminders</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newReminderModal">
+                    + New Reminder
+                </button>
+            </div>
+            
+            <% if (reminders.length > 0 || (completedReminders && completedReminders.length > 0)) { %>
+                <% if (completedReminders && completedReminders.length > 0) { %>
+                    <button class="btn btn-sm btn-secondary mb-3" id="toggle-history-btn">
+                        Show/Hide Completed Reminders
+                    </button>
+                <% } %>
+                
+                <% if (reminders.length > 0) { %>
+                    <div class="list-group">
+                        <% reminders.forEach(reminder => { %>
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5><%= reminder.message %></h5>
+                                        <p class="mb-1">
+                                            For: <%= reminder.task_title %> (<%= reminder.skill_name %>)
+                                        </p>
+                                        <small class="text-muted">
+                                            <%= new Date(reminder.reminder_time).toLocaleString() %>
+                                        </small>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-sm btn-outline-success me-2 mark-completed-btn" 
+                                            data-reminder-id="<%= reminder.id %>">
+                                            Mark Completed
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger delete-reminder-btn" 
+                                            data-reminder-id="<%= reminder.id %>">
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                <% } else { %>
+                    <div class="alert alert-info">
+                        You don't have any active reminders.
+                    </div>
+                <% } %>
+
+                <% if (completedReminders && completedReminders.length > 0) { %>
+                    <div id="completedReminders" style="display: none;">
+                        <h4 class="mt-4">Completed Reminders</h4>
+                        <div class="list-group" id="completed-reminders-list">
+                            <% completedReminders.forEach(reminder => { %>
+                                <div class="list-group-item reminder-completed">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h5 class="mb-1"><del><%= reminder.message %></del></h5>
+                                            <p class="mb-1">
+                                                <del>For: <%= reminder.task_title %> (<%= reminder.skill_name %>)</del>
+                                            </p>
+                                            <small class="text-muted">
+                                                <del><%= new Date(reminder.reminder_time).toLocaleString() %></del>
+                                            </small>
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-danger delete-reminder-btn" 
+                                            data-reminder-id="<%= reminder.id %>">
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                <% } %>
+            <% } else { %>
+                <div class="alert alert-info">
+                    You don't have any reminders set up yet.
+                </div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- New Reminder Modal -->
+<div class="modal fade" id="newReminderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">New Reminder</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reminderForm">
+                    <div class="mb-3">
+                        <label for="reminderTask" class="form-label">Task</label>
+                        <select class="form-select" id="reminderTask" required>
+                            <option value="" selected disabled>Select a task</option>
+                            <% tasks.forEach(task => { %>
+                                <option value="<%= task.id %>">
+                                    <%= task.title %> (<%= task.skill_name %>)
+                                </option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="reminderDateTime" class="form-label">Date & Time</label>
+                        <input type="datetime-local" class="form-control" id="reminderDateTime" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="reminderMessage" class="form-label">Message</label>
+                        <textarea class="form-control" id="reminderMessage" rows="3" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="reminderForm" class="btn btn-primary">Save Reminder</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('partials/footer') %>
+
+<script src="/js/reminders.js"></script>

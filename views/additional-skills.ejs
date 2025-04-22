@@ -1,0 +1,180 @@
+<%- include('partials/header', { user: user }) %>
+<link rel="stylesheet" href="/css/style.css">
+<div class="container mt-5 pt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Your Additional Skills</h2>
+            <p class="text-muted">Complementary skills to expand your knowledge</p>
+        </div>
+    </div>
+
+    <div class="row gy-5 gx-5">
+        <!-- Skills List -->
+        <div class="col-md-8">
+            <% secondarySkills.forEach(skill => { 
+                const skillTasks = tasks.filter(task => task.skill_name === skill.name);
+            %>
+                <div id="skill-<%= skill.id %>-tasks" class="mb-5">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4><%= skill.name %> Tasks</h4>
+                        <span class="badge bg-primary"><%= skillTasks.length %> tasks</span>
+                    </div>
+                    
+                    <% if (skillTasks.length > 0) { %>
+                        <div class="list-group">
+                            <% skillTasks.forEach(task => { %>
+                                <div class="list-group-item task-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h5 class="mb-1"><%= task.title %></h5>
+                                            <p class="mb-2 text-muted"><%= task.description %></p>
+                                            <span class="badge bg-<%= task.difficulty === 'beginner' ? 'info' : task.difficulty === 'intermediate' ? 'warning' : 'danger' %>">
+                                                <%= task.difficulty %>
+                                            </span>
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-success me-2 schedule-btn" 
+                                                data-task-id="<%= task.id %>">
+                                            <i class="bi bi-calendar-plus"></i> Schedule
+                                        </button>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    <% } else { %>
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> No tasks available for this skill yet.
+                        </div>
+                    <% } %>
+                </div>
+            <% }); %>
+        </div>
+
+        <!-- Sidebar with more left spacing -->
+        <div class="col-md-4 resources-container">
+            <!-- Resource List -->
+            <div class="card mb-5">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Resources</h4>
+                    <span class="badge bg-primary"><%= resources.length %></span>
+                </div>
+                <div class="card-body p-0">
+                    <% if (resources.length > 0) { %>
+                        <div class="list-group list-group-flush">
+                            <% resources.forEach(resource => { %>
+                                <a href="<%= resource.url %>" target="_blank" 
+                                   class="list-group-item list-group-item-action resource-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1"><%= resource.title %></h5>
+                                        <small class="text-<%= resource.level === 'beginner' ? 'info' : resource.level === 'intermediate' ? 'warning' : 'danger' %>">
+                                            <%= resource.level %>
+                                        </small>
+                                    </div>
+                                    <p class="mb-1 text-muted"><%= resource.type %></p>
+                                    <small class="text-primary"><%= resource.skill_name %></small>
+                                </a>
+                            <% }); %>
+                        </div>
+                    <% } else { %>
+                        <div class="alert alert-info m-3">
+                            <i class="bi bi-info-circle"></i> No resources available yet.
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Progress Chart -->
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h4 class="mb-0">Skill Progress</h4>
+                </div>
+                <div class="card-body">
+                    <canvas id="skillProgressChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="scheduleTaskModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Schedule Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="scheduleTaskForm">
+                    <input type="hidden" id="taskId">
+                    <div class="mb-3">
+                        <label for="dueDate" class="form-label">Due Date</label>
+                        <input type="date" class="form-control" id="dueDate" required>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="setReminder">
+                        <label class="form-check-label" for="setReminder">Set Reminder</label>
+                    </div>
+                    <div id="reminderFields" class="collapse">
+                        <div class="mb-3">
+                            <label for="reminderDate" class="form-label">Reminder Date & Time</label>
+                            <input type="datetime-local" class="form-control" id="reminderDate">
+                        </div>
+                        <div class="mb-3">
+                            <label for="reminderMessage" class="form-label">Message</label>
+                            <textarea class="form-control" id="reminderMessage" rows="2"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveTaskBtn">Save Task</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('partials/footer') %>
+
+<script src="/js/skills.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('setReminder').addEventListener('change', function () {
+            document.getElementById('reminderFields').classList.toggle('show', this.checked);
+        });
+
+        const ctx = document.getElementById('skillProgressChart')?.getContext('2d');
+        if (ctx) {
+            const skills = JSON.parse('<%- JSON.stringify(secondarySkills.map(s => s.name)) %>');
+            const progress = skills.map(() => Math.floor(Math.random() * 30) + 10);
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: skills,
+                    datasets: [{
+                        label: 'Progress %',
+                        data: progress,
+                        backgroundColor: '#6c63ff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: value => value + '%'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+    });
+</script>
